@@ -20,8 +20,44 @@
             width: 100%;
             height: 100%;
             position: relative;
-            /* Lo spinner viene mostrato come sfondo CSS nativo mentre l'iframe carica */
-            background: #2c3e50 url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 50 50"><path fill="%2327ae60" d="M25,5A20,20,0,1,0,45,25,20,20,0,0,0,25,5Zm0,36A16,16,0,1,1,41,25,16,16,0,0,1,25,41Z" opacity="0.3"/><path fill="%2327ae60" d="M25,5A20,20,0,0,1,45,25h-4A16,16,0,0,0,25,9Z"><animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="0.8s" repeatCount="indefinite"/></path></svg>') center center no-repeat;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Contenitore centrato per spinner e testo */
+        #loader-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: white;
+            z-index: 1;
+            width: 100%;
+        }
+
+        .spinner {
+            width: 46px;
+            height: 46px;
+            border: 4px solid rgba(255, 255, 255, 0.2);
+            border-top: 4px solid #27ae60;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 15px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 16px;
+            font-weight: 600;
+            opacity: 0.9;
+            letter-spacing: 0.5px;
+            color: #ffffff;
         }
 
         iframe {
@@ -29,7 +65,9 @@
             height: 100%;
             border: none;
             display: block;
-            position: relative;
+            position: absolute;
+            top: 0;
+            left: 0;
             z-index: 2;
             background-color: transparent;
         }
@@ -43,36 +81,37 @@
 
             if (idParam) {
                 const targetUrl = googleWebApp + "?id=" + encodeURIComponent(idParam);
-                document.getElementById("main-container").innerHTML = `
-                    <iframe src="${targetUrl}" allow="fullscreen"></iframe>
-                `;
+                const iframe = document.createElement("iframe");
+                iframe.src = targetUrl;
+                iframe.allow = "fullscreen";
+                
+                // Aggiunge l'iframe affianco allo spinner (non cancellandolo)
+                document.getElementById("main-container").appendChild(iframe);
             }
         });
 
-window.addEventListener("message", function(event) {
-    if (event.data === "CLOSE_APP") {
-        // 1. Tenta la chiusura reale (funziona da App Fotocamera)
-        window.close();
-        
-        // 2. Se dopo 100ms la pagina è ancora aperta (es. Lettore QR da Centro di Controllo),
-        // azzera la schermata per confermare visivamente la chiusura all'operatore.
-        setTimeout(function() {
-            document.getElementById("main-container").innerHTML = `
-                <div style="display:flex; justify-content:center; align-items:center; height:100vh; background-color:#2c3e50; color:white; font-family:-apple-system,sans-serif; text-align:center; padding:20px;">
-                    <div style="background:rgba(255,255,255,0.1); padding:30px; border-radius:16px; backdrop-filter:blur(10px);">
-                        <h2 style="margin:0 0 10px 0; font-size:20px;">Sessione Terminata</h2>
-                        <p style="margin:0; opacity:0.8; font-size:14px;">Puoi chiudere la finestra con la X</p>
-                    </div>
-                </div>
-            `;
-        }, 100);
-    }
-});        
+        window.addEventListener("message", function(event) {
+            if (event.data === "CLOSE_APP") {
+                // 1. Tenta la chiusura reale (funziona da App Fotocamera)
+                window.close();
+                
+                // 2. Fallback per il lettore QR da Centro di Controllo / In-App
+                setTimeout(function() {
+                    document.getElementById("main-container").innerHTML = `
+                        <div style="display:flex; justify-content:center; align-items:center; height:100vh; background-color:#2c3e50; color:white; font-family:-apple-system,sans-serif; text-align:center; padding:20px;">
+                            <div style="background:rgba(255,255,255,0.1); padding:30px; border-radius:16px; backdrop-filter:blur(10px);">
+                                <h2 style="margin:0 0 10px 0; font-size:20px;">Sessione Terminata</h2>
+                                <p style="margin:0; opacity:0.8; font-size:14px;">Puoi chiudere la finestra con la X</p>
+                            </div>
+                        </div>
+                    `;
+                }, 100);
+            }
+        });        
     </script>
 </head>
 <body>
     <div id="main-container">
-        <!-- Elemento con lo spinner e il testo sottostante -->
         <div id="loader-box">
             <div class="spinner"></div>
             <div class="loading-text">Verifica in corso...</div>
